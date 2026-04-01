@@ -3,39 +3,103 @@
 <head>
   <title>Admin Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
-    body{margin:0;font-family:Arial;background:#f4f6f9;}
-    header{background:#667eea;color:#fff;padding:15px;text-align:center;font-size:20px;}
-    .container{padding:20px;}
-    .controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;}
-    input{padding:8px;border-radius:5px;border:1px solid #ccc;}
-    button{padding:8px 12px;border:none;background:#667eea;color:white;border-radius:5px;cursor:pointer;}
-    table{width:100%;border-collapse:collapse;background:white;}
-    th,td{padding:10px;border-bottom:1px solid #ddd;}
-    th{background:#eee;}
+    body {
+      margin:0;
+      font-family:Arial;
+      background:#f4f6f9;
+    }
+
+    /* 🔴 HIDE EVERYTHING INITIALLY */
+    #app {
+      display: none;
+    }
+
+    header {
+      background:#667eea;
+      color:#fff;
+      padding:15px;
+      text-align:center;
+      font-size:20px;
+    }
+
+    .container {
+      padding:20px;
+    }
+
+    .controls {
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:15px;
+    }
+
+    input {
+      padding:8px;
+      border-radius:5px;
+      border:1px solid #ccc;
+    }
+
+    button {
+      padding:8px 12px;
+      border:none;
+      background:#667eea;
+      color:white;
+      border-radius:5px;
+      cursor:pointer;
+    }
+
+    table {
+      width:100%;
+      border-collapse:collapse;
+      background:white;
+    }
+
+    th, td {
+      padding:10px;
+      border-bottom:1px solid #ddd;
+    }
+
+    th {
+      background:#eee;
+    }
+
+    /* Optional loading text */
+    #loading {
+      text-align:center;
+      margin-top:100px;
+      font-size:18px;
+    }
   </style>
 </head>
+
 <body>
 
-<header>Admin Dashboard</header>
+<div id="loading">Checking authentication...</div>
 
-<div class="container">
-  <div class="controls">
-    <input id="search" placeholder="Search..." onkeyup="filterData()">
-    <input type="date" id="dateFilter" onchange="filterData()">
-    <button onclick="exportCSV()">Export CSV</button>
+<div id="app">
+  <header>Admin Dashboard</header>
+
+  <div class="container">
+    <div class="controls">
+      <input id="search" placeholder="Search..." onkeyup="filterData()">
+      <input type="date" id="dateFilter" onchange="filterData()">
+      <button onclick="exportCSV()">Export CSV</button>
+    </div>
+
+    <table id="table">
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Message</th>
+        <th>Date</th>
+      </tr>
+    </table>
   </div>
-
-  <table id="table">
-    <tr>
-      <th>Name</th>
-      <th>Email</th>
-      <th>Message</th>
-      <th>Date</th>
-    </tr>
-  </table>
 </div>
 
 <script type="module" src="app.js"></script>
+
 </body>
 </html>
