@@ -8,9 +8,12 @@ import {
 
 import {
   getAuth,
-  onAuthStateChanged
+  onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+// 🔥 CONFIG (MUST MATCH LOGIN SITE)
 const firebaseConfig = {
   apiKey: "AIzaSyAgSwpGRg7kasPOE0YF8DJ1nCRV2kwoj6Y",
   authDomain: "eleto-industries.firebaseapp.com",
@@ -23,22 +26,34 @@ const auth = getAuth(app);
 
 let allData = [];
 
-// 🔐 AUTH CHECK
+// 🔥 FORCE SESSION PERSISTENCE
+await setPersistence(auth, browserLocalPersistence);
+
+// 🔐 AUTH CHECK WITH TIMEOUT SAFETY
+let authResolved = false;
+
 onAuthStateChanged(auth, (user) => {
+  authResolved = true;
+
   const appDiv = document.getElementById("app");
   const loadingDiv = document.getElementById("loading");
 
   if (!user) {
-    // ❌ NOT LOGGED IN
     window.location.href = "/";
   } else {
-    // ✅ LOGGED IN
     loadingDiv.style.display = "none";
     appDiv.style.display = "block";
-
     loadData();
   }
 });
+
+// 🛑 FALLBACK (IF AUTH NEVER RETURNS)
+setTimeout(() => {
+  if (!authResolved) {
+    console.error("Auth timeout → redirecting");
+    window.location.href = "/";
+  }
+}, 5000);
 
 // 📊 LOAD DATA
 function loadData() {
