@@ -1,3 +1,4 @@
+// 🔥 Firebase Imports
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 
 import {
@@ -13,33 +14,33 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// 🔥 YOUR FIREBASE CONFIG
+// 🔥 YOUR FIREBASE CONFIG (REPLACE THIS)
 const firebaseConfig = {
   apiKey: "YOUR_KEY",
   authDomain: "YOUR_DOMAIN",
   projectId: "YOUR_PROJECT_ID",
 };
 
-// INIT
+// 🔥 INIT FIREBASE
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// STORE DATA
+// 📦 STORE ALL DATA
 let allData = [];
 
-// 🔐 AUTH PROTECTION
+// 🔐 CHECK LOGIN STATUS
 onAuthStateChanged(auth, (user) => {
   if (!user) {
-    // ❌ Not logged in → redirect to login page
+    // ❌ NOT LOGGED IN → GO BACK TO LOGIN PAGE
     window.location.href = "/";
   } else {
-    // ✅ Logged in → load data
+    // ✅ LOGGED IN → LOAD DATA
     loadData();
   }
 });
 
-// 📊 LOAD DATA (REAL-TIME)
+// 📊 LOAD DATA FROM FIRESTORE (REAL-TIME)
 function loadData() {
   const q = query(collection(db, "leads"), orderBy("createdAt", "desc"));
 
@@ -48,7 +49,7 @@ function loadData() {
 
     const table = document.getElementById("table");
 
-    // RESET TABLE
+    // 🧹 RESET TABLE
     table.innerHTML = `
       <tr>
         <th>Name</th>
@@ -61,13 +62,12 @@ function loadData() {
     snapshot.forEach((doc) => {
       const data = doc.data();
       allData.push(data);
-
       addRow(data);
     });
   });
 }
 
-// ➕ ADD ROW
+// ➕ ADD ROW TO TABLE
 function addRow(data) {
   const table = document.getElementById("table");
   const row = table.insertRow();
@@ -84,13 +84,14 @@ function addRow(data) {
   row.insertCell(3).innerText = dateText;
 }
 
-// 🔍 SEARCH + FILTER
+// 🔍 SEARCH + DATE FILTER
 window.filterData = function () {
   const search = document.getElementById("search").value.toLowerCase();
   const selectedDate = document.getElementById("dateFilter").value;
 
   const table = document.getElementById("table");
 
+  // RESET TABLE
   table.innerHTML = `
     <tr>
       <th>Name</th>
@@ -126,7 +127,7 @@ window.filterData = function () {
 // 📤 EXPORT CSV
 window.exportCSV = function () {
   if (allData.length === 0) {
-    alert("No data to export");
+    alert("No data available to export");
     return;
   }
 
