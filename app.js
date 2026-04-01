@@ -1,45 +1,54 @@
-import { db, auth } from "./firebase.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+
 import {
+  getFirestore,
   collection,
-  getDocs,
   query,
   orderBy,
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 import {
-  signInWithEmailAndPassword,
+  getAuth,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-let allData = [];
-
-// LOGIN
-window.login = async function () {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  await signInWithEmailAndPassword(auth, email, password);
+// 🔥 YOUR FIREBASE CONFIG
+const firebaseConfig = {
+  apiKey: "YOUR_KEY",
+  authDomain: "YOUR_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
 };
 
-// AUTH CHECK
+// INIT
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// STORE DATA
+let allData = [];
+
+// 🔐 AUTH PROTECTION
 onAuthStateChanged(auth, (user) => {
-  if (user) {
-    document.getElementById("loginDiv").style.display = "none";
-    document.getElementById("dashboard").style.display = "block";
-    loadRealtime();
+  if (!user) {
+    // ❌ Not logged in → redirect to login page
+    window.location.href = "/";
+  } else {
+    // ✅ Logged in → load data
+    loadData();
   }
 });
 
-// REAL-TIME DATA (IMPORTANT)
-function loadRealtime() {
+// 📊 LOAD DATA (REAL-TIME)
+function loadData() {
   const q = query(collection(db, "leads"), orderBy("createdAt", "desc"));
 
   onSnapshot(q, (snapshot) => {
     allData = [];
+
     const table = document.getElementById("table");
 
-    // Clear table except header
+    // RESET TABLE
     table.innerHTML = `
       <tr>
         <th>Name</th>
@@ -54,27 +63,32 @@ function loadRealtime() {
       allData.push(data);
 
       addRow(data);
-
-      // 🔔 REAL-TIME POPUP
-      showPopup("New Lead: " + data.name);
     });
   });
 }
 
-// ADD ROW
+// ➕ ADD ROW
 function addRow(data) {
   const table = document.getElementById("table");
   const row = table.insertRow();
 
-  row.insertCell(0).innerText = data.name;
-  row.insertCell(1).innerText = data.email;
-  row.insertCell(2).innerText = data.message;
-  row.insertCell(3).innerText = data.createdAt?.toDate();
+  row.insertCell(0).innerText = data.name || "";
+  row.insertCell(1).innerText = data.email || "";
+  row.insertCell(2).innerText = data.message || "";
+
+  let dateText = "";
+  if (data.createdAt) {
+    dateText = data.createdAt.toDate().toLocaleString();
+  }
+
+  row.insertCell(3).innerText = dateText;
 }
 
-// SEARCH FILTER
+// 🔍 SEARCH + FILTER
 window.filterData = function () {
   const search = document.getElementById("search").value.toLowerCase();
+  const selectedDate = document.getElementById("dateFilter").value;
+
   const table = document.getElementById("table");
 
   table.innerHTML = `
@@ -87,32 +101,50 @@ window.filterData = function () {
   `;
 
   allData.forEach(data => {
-    if (
-      data.name.toLowerCase().includes(search) ||
-      data.email.toLowerCase().includes(search) ||
-      data.message.toLowerCase().includes(search)
-    ) {
+    const name = (data.name || "").toLowerCase();
+    const email = (data.email || "").toLowerCase();
+    const message = (data.message || "").toLowerCase();
+
+    const matchesSearch =
+      name.includes(search) ||
+      email.includes(search) ||
+      message.includes(search);
+
+    let matchesDate = true;
+
+    if (selectedDate && data.createdAt) {
+      const date = data.createdAt.toDate().toISOString().split("T")[0];
+      matchesDate = date === selectedDate;
+    }
+
+    if (matchesSearch && matchesDate) {
       addRow(data);
     }
   });
 };
 
-// EXPORT CSV
+// 📤 EXPORT CSV
 window.exportCSV = function () {
-  let csv = "Name,Email,Message\n";
+  if (allData.length === 0) {
+    alert("No data to export");
+    return;
+  }
+
+  let csv = "Name,Email,Message,Date\n";
 
   allData.forEach(d => {
-    csv += `${d.name},${d.email},${d.message}\n`;
+    const date = d.createdAt
+      ? d.createdAt.toDate().toLocaleString()
+      : "";
+
+    csv += `"${d.name}","${d.email}","${d.message}","${date}"\n`;
   });
 
   const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
+  a.href = url;
   a.download = "leads.csv";
   a.click();
 };
-
-// POPUP NOTIFICATION
-function showPopup(text) {
-  alert(text);
-}
