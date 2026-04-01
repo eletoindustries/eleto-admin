@@ -3,8 +3,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import {
   getFirestore,
   collection,
-  query,
-  orderBy,
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -13,11 +11,10 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// 🔥 CONFIG
 const firebaseConfig = {
-  apiKey: "YOUR_KEY",
-  authDomain: "YOUR_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
+  apiKey: "AIzaSyAgSwpGRg7kasPOE0YF8DJ1nCRV2kwoj6Y",
+  authDomain: "eleto-industries.firebaseapp.com",
+  projectId: "eleto-industries",
 };
 
 const app = initializeApp(firebaseConfig);
@@ -26,7 +23,6 @@ const auth = getAuth(app);
 
 let allData = [];
 
-// 🔐 AUTH CHECK (NO .style ANYWHERE)
 onAuthStateChanged(auth, (user) => {
   if (!user) {
     window.location.href = "/";
@@ -35,15 +31,10 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// 📊 LOAD DATA
 function loadData() {
   const table = document.getElementById("table");
 
-  if (!table) return;
-
-  const q = query(collection(db, "leads"), orderBy("createdAt", "desc"));
-
-  onSnapshot(q, (snapshot) => {
+  onSnapshot(collection(db, "leads"), (snapshot) => {
     allData = [];
 
     table.innerHTML = `
@@ -58,31 +49,24 @@ function loadData() {
     snapshot.forEach((doc) => {
       const data = doc.data();
       allData.push(data);
-      addRow(data);
+
+      const row = table.insertRow();
+      row.insertCell(0).innerText = data.name || "";
+      row.insertCell(1).innerText = data.email || "";
+      row.insertCell(2).innerText = data.message || "";
+
+      let date = "";
+      if (data.createdAt && data.createdAt.toDate) {
+        date = data.createdAt.toDate().toLocaleString();
+      }
+
+      row.insertCell(3).innerText = date;
     });
+
+    console.log("DATA:", allData); // DEBUG
   });
 }
 
-// ➕ ROW
-function addRow(data) {
-  const table = document.getElementById("table");
-  if (!table) return;
-
-  const row = table.insertRow();
-
-  row.insertCell(0).innerText = data.name || "";
-  row.insertCell(1).innerText = data.email || "";
-  row.insertCell(2).innerText = data.message || "";
-
-  let date = "";
-  if (data.createdAt) {
-    date = data.createdAt.toDate().toLocaleString();
-  }
-
-  row.insertCell(3).innerText = date;
-}
-
-// 🔍 FILTER
 window.filterData = function () {
   const search = document.getElementById("search").value.toLowerCase();
   const dateFilter = document.getElementById("dateFilter").value;
@@ -105,26 +89,26 @@ window.filterData = function () {
 
     let matchDate = true;
 
-    if (dateFilter && d.createdAt) {
+    if (dateFilter && d.createdAt && d.createdAt.toDate) {
       const date = d.createdAt.toDate().toISOString().split("T")[0];
       matchDate = date === dateFilter;
     }
 
     if (matchSearch && matchDate) {
-      addRow(d);
+      const row = table.insertRow();
+      row.insertCell(0).innerText = d.name;
+      row.insertCell(1).innerText = d.email;
+      row.insertCell(2).innerText = d.message;
+      row.insertCell(3).innerText = d.createdAt ? d.createdAt.toDate().toLocaleString() : "";
     }
   });
 };
 
-// 📤 EXPORT
 window.exportCSV = function () {
   let csv = "Name,Email,Message,Date\n";
 
   allData.forEach(d => {
-    const date = d.createdAt
-      ? d.createdAt.toDate().toLocaleString()
-      : "";
-
+    const date = d.createdAt ? d.createdAt.toDate().toLocaleString() : "";
     csv += `"${d.name}","${d.email}","${d.message}","${date}"\n`;
   });
 
