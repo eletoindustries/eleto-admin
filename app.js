@@ -14,42 +14,46 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// 🔥 YOUR FIREBASE CONFIG (REPLACE THIS)
+// 🔥 YOUR FIREBASE CONFIG (PUT YOUR VALUES)
 const firebaseConfig = {
   apiKey: "YOUR_KEY",
   authDomain: "YOUR_DOMAIN",
   projectId: "YOUR_PROJECT_ID",
 };
 
-// 🔥 INIT FIREBASE
+// 🔥 INIT
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// 📦 STORE ALL DATA
+// 📦 STORE DATA
 let allData = [];
 
-// 🔐 CHECK LOGIN STATUS
+// 🔐 AUTH CHECK (NO STYLE USAGE HERE)
 onAuthStateChanged(auth, (user) => {
   if (!user) {
-    // ❌ NOT LOGGED IN → GO BACK TO LOGIN PAGE
     window.location.href = "/";
   } else {
-    // ✅ LOGGED IN → LOAD DATA
     loadData();
   }
 });
 
-// 📊 LOAD DATA FROM FIRESTORE (REAL-TIME)
+// 📊 LOAD DATA
 function loadData() {
+  const table = document.getElementById("table");
+
+  // 🛑 SAFETY CHECK (PREVENT NULL ERROR)
+  if (!table) {
+    console.error("Table not found in HTML");
+    return;
+  }
+
   const q = query(collection(db, "leads"), orderBy("createdAt", "desc"));
 
   onSnapshot(q, (snapshot) => {
     allData = [];
 
-    const table = document.getElementById("table");
-
-    // 🧹 RESET TABLE
+    // RESET TABLE
     table.innerHTML = `
       <tr>
         <th>Name</th>
@@ -67,9 +71,12 @@ function loadData() {
   });
 }
 
-// ➕ ADD ROW TO TABLE
+// ➕ ADD ROW
 function addRow(data) {
   const table = document.getElementById("table");
+
+  if (!table) return;
+
   const row = table.insertRow();
 
   row.insertCell(0).innerText = data.name || "";
@@ -84,14 +91,17 @@ function addRow(data) {
   row.insertCell(3).innerText = dateText;
 }
 
-// 🔍 SEARCH + DATE FILTER
+// 🔍 FILTER
 window.filterData = function () {
-  const search = document.getElementById("search").value.toLowerCase();
-  const selectedDate = document.getElementById("dateFilter").value;
-
+  const searchInput = document.getElementById("search");
+  const dateInput = document.getElementById("dateFilter");
   const table = document.getElementById("table");
 
-  // RESET TABLE
+  if (!table) return;
+
+  const search = searchInput ? searchInput.value.toLowerCase() : "";
+  const selectedDate = dateInput ? dateInput.value : "";
+
   table.innerHTML = `
     <tr>
       <th>Name</th>
@@ -101,7 +111,7 @@ window.filterData = function () {
     </tr>
   `;
 
-  allData.forEach(data => {
+  allData.forEach((data) => {
     const name = (data.name || "").toLowerCase();
     const email = (data.email || "").toLowerCase();
     const message = (data.message || "").toLowerCase();
@@ -133,7 +143,7 @@ window.exportCSV = function () {
 
   let csv = "Name,Email,Message,Date\n";
 
-  allData.forEach(d => {
+  allData.forEach((d) => {
     const date = d.createdAt
       ? d.createdAt.toDate().toLocaleString()
       : "";
